@@ -1,0 +1,121 @@
+{
+  "products": [
+    {
+      "id": "prod-001",
+      "name": "Nintendo Switch OLED",
+      "description": "The latest Nintendo Switch console featuring a vibrant 7-inch OLED screen and enhanced audio.",
+      "barcode": "045496882877",
+      "imageUrl": "https://images.unsplash.com/photo-1606813902912-3dd234545736?auto=format&fit=crop&w=800&q=80",
+      "listings": [
+        {
+          "id": "listing-001",
+          "store": {
+            "id": "store-bestbuy",
+            "name": "Best Buy",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Best_Buy_Logo.svg"
+          },
+          "price": 349.99,
+          "productUrl": "https://www.bestbuy.com/"
+        },
+        {
+          "id": "listing-002",
+          "store": {
+            "id": "store-target",
+            "name": "Target",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Target_logo.svg"
+          },
+          "price": 339.99,
+          "productUrl": "https://www.target.com/"
+        },
+        {
+          "id": "listing-003",
+          "store": {
+            "id": "store-walmart",
+            "name": "Walmart",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg"
+          },
+          "price": 329.0,
+          "productUrl": "https://www.walmart.com/"
+        }
+      ]
+    },
+    {
+      "id": "prod-002",
+      "name": "Apple AirPods Pro (2nd Gen)",
+      "description": "Noise-cancelling wireless earbuds with improved battery life and adaptive transparency.",
+      "barcode": "194253397774",
+      "imageUrl": "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?auto=format&fit=crop&w=800&q=80",
+      "listings": [
+        {
+          "id": "listing-004",
+          "store": {
+            "id": "store-apple",
+            "name": "Apple Store",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
+          },
+          "price": 249.0,
+          "productUrl": "https://www.apple.com/"
+        },
+        {
+          "id": "listing-005",
+          "store": {
+            "id": "store-amazon",
+            "name": "Amazon",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg"
+          },
+          "price": 229.99,
+          "productUrl": "https://www.amazon.com/"
+        },
+        {
+          "id": "listing-006",
+          "store": {
+            "id": "store-bestbuy",
+            "name": "Best Buy",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Best_Buy_Logo.svg"
+          },
+          "price": 239.99,
+          "productUrl": "https://www.bestbuy.com/"
+        }
+      ]
+    },
+    {
+      "id": "prod-003",
+      "name": "Keurig K-Elite Coffee Maker",
+      "description": "Single-serve coffee brewer with strong brew and iced coffee settings.",
+      "barcode": "611247382403",
+      "imageUrl": "https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=800&q=80",
+      "listings": [
+        {
+          "id": "listing-007",
+          "store": {
+            "id": "store-bedbath",
+            "name": "Bed Bath & Beyond",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/1/17/Bed_Bath_%26_Beyond_logo.svg"
+          },
+          "price": 169.99,
+          "productUrl": "https://www.bedbathandbeyond.com/"
+        },
+        {
+          "id": "listing-008",
+          "store": {
+            "id": "store-walmart",
+            "name": "Walmart",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg"
+          },
+          "price": 149.0,
+          "productUrl": "https://www.walmart.com/"
+        },
+        {
+          "id": "listing-009",
+          "store": {
+            "id": "store-costco",
+            "name": "Costco",
+            "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Costco_Wholesale_logo_2010-10-26.svg"
+          },
+          "price": 159.99,
+          "productUrl": "https://www.costco.com/"
+        }
+      ]
+    }
+  ]
+}
