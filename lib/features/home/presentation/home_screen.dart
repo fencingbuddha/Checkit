@@ -3,6 +3,7 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/utils/relative_time_formatter.dart';
 import '../../results/presentation/results_screen.dart';
 import '../application/product_search_controller.dart';
 
@@ -39,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final controller = context.read<ProductSearchController>();
     final query = _searchController.text;
     FocusScope.of(context).unfocus();
-    await controller.search(query);
+    await controller.search(query, immediate: true);
     if (!navigator.mounted) return;
     navigator.push(MaterialPageRoute(builder: (_) => const ResultsScreen()));
   }
@@ -80,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final controller = context.read<ProductSearchController>();
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.appName),
@@ -100,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _searchController,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _submitSearch(context),
+                onChanged: controller.search,
                 decoration: InputDecoration(
                   hintText: AppStrings.searchHint,
                   prefixIcon: const Icon(Icons.search),
@@ -110,6 +113,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              Consumer<ProductSearchController>(
+                builder: (context, controller, _) {
+                  if (controller.statusMessage == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      controller.statusMessage!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  );
+                },
+              ),
               FilledButton.icon(
                 onPressed: _isScanning ? null : () => _handleScan(context),
                 icon: const Icon(Icons.qr_code_scanner),
@@ -146,58 +171,82 @@ class _FeaturedProductsPreview extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           );
         }
-        return SizedBox(
-          height: 160,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemBuilder: (context, index) {
-              final product = controller.results[index];
-              return GestureDetector(
-                onTap: () async {
-                  final navigator = Navigator.of(context);
-                  await controller.search(product.name);
-                  if (!navigator.mounted) return;
-                  navigator.push(MaterialPageRoute(builder: (_) => const ResultsScreen()));
-                },
-                child: Container(
-                  width: 200,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            product.imageUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Theme.of(context).colorScheme.surface,
-                              child: const Icon(Icons.image_not_supported_outlined, size: 32),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        product.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ],
+        final theme = Theme.of(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (controller.lastUpdated != null)
+              Text(
+                'Updated ${RelativeTimeFormatter.format(controller.lastUpdated!)}',
+                style: theme.textTheme.bodySmall,
+              ),
+            if (controller.isStale)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'May be stale',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.error,
                   ),
                 ),
-              );
-            },
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemCount: controller.results.length,
-          ),
+              ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (context, index) {
+                  final product = controller.results[index];
+                  return GestureDetector(
+                    onTap: () async {
+                      final navigator = Navigator.of(context);
+                      await controller.search(product.name, immediate: true);
+                      if (!navigator.mounted) return;
+                      navigator.push(
+                        MaterialPageRoute(builder: (_) => const ResultsScreen()),
+                      );
+                    },
+                    child: Container(
+                      width: 200,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                product.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  child: const Icon(Icons.image_not_supported_outlined, size: 32),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            product.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemCount: controller.results.length,
+              ),
+            ),
+          ],
         );
       },
     );
