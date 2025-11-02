@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/relative_time_formatter.dart';
+import '../../../core/utils/source_labels.dart';
 import '../../../models/product.dart';
 import '../../product/application/favorites_controller.dart';
 import '../../product/presentation/product_detail_screen.dart';
@@ -40,14 +42,105 @@ class ResultsScreen extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemBuilder: (context, index) {
-              final product = controller.results[index];
+              if (index == 0) {
+                return _ResultsMetadata(controller: controller);
+              }
+              final product = controller.results[index - 1];
               return _ProductResultCard(product: product);
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemCount: controller.results.length,
+            separatorBuilder: (_, index) =>
+                SizedBox(height: index == 0 ? 16 : 12),
+            itemCount: controller.results.length + 1,
           );
         },
       ),
+    );
+  }
+}
+
+class _ResultsMetadata extends StatelessWidget {
+  const _ResultsMetadata({required this.controller});
+
+  final ProductSearchController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final children = <Widget>[];
+
+    if (controller.statusMessage != null) {
+      children.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            controller.statusMessage!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (controller.lastUpdated != null) {
+      children.add(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.schedule, size: 16, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              'Updated ${RelativeTimeFormatter.format(controller.lastUpdated!)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (controller.isStale) {
+      children.add(
+        Text(
+          'May be stale',
+          style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.error),
+        ),
+      );
+    }
+
+    if (controller.sources.isNotEmpty) {
+      children.add(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: controller.sources.map(
+            (source) => Chip(
+              label: Text(SourceLabels.labelFor(source)),
+              visualDensity: VisualDensity.compact,
+            ),
+          ).toList(),
+        ),
+      );
+    }
+
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          children[i],
+        ],
+      ],
     );
   }
 }
@@ -61,7 +154,11 @@ class _ProductResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final favorites = context.watch<FavoritesController>();
     final theme = Theme.of(context);
-    final lowestPrice = CurrencyFormatter.format(product.lowestPrice);
+    final lowestListing = product.listings.first;
+    final lowestPrice = CurrencyFormatter.format(lowestListing.priceTotal);
+    final shipping =
+        lowestListing.priceShipping > 0 ? CurrencyFormatter.format(lowestListing.priceShipping) : null;
+    final itemPrice = CurrencyFormatter.format(lowestListing.priceItem);
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -112,18 +209,34 @@ class _ProductResultCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (shipping != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Item $itemPrice + $shipping shipping',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
                         Chip(
-                          label: Text('${product.listings.length} stores'),
+                          label: Text('${product.listings.length} offers'),
                           avatar: const Icon(Icons.storefront, size: 18),
                         ),
                         Chip(
                           label: Text('UPC ${product.barcode}'),
                           avatar: const Icon(Icons.qr_code, size: 18),
+                        ),
+                        ...product.sources.map(
+                          (source) => Chip(
+                            label: Text(SourceLabels.labelFor(source)),
+                            avatar: const Icon(Icons.public, size: 18),
+                          ),
                         ),
                       ],
                     ),

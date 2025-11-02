@@ -3,11 +3,24 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 import '../models/product.dart';
+import '../models/search_snapshot.dart';
+
+typedef SearchUpdateCallback = void Function(SearchSnapshot snapshot);
 
 abstract class ProductRepository {
-  Future<List<Product>> searchProducts(String query);
-  Future<Product?> getProductByBarcode(String barcode);
-  Future<List<Product>> getFeaturedProducts();
+  Future<SearchSnapshot> searchProducts(
+    String query, {
+    SearchUpdateCallback? onUpdate,
+  });
+
+  Future<SearchSnapshot> searchByBarcode(
+    String barcode, {
+    SearchUpdateCallback? onUpdate,
+  });
+
+  Future<SearchSnapshot> getFeaturedProducts({
+    SearchUpdateCallback? onUpdate,
+  });
 }
 
 class MockProductRepository implements ProductRepository {
@@ -25,37 +38,58 @@ class MockProductRepository implements ProductRepository {
   }
 
   @override
-  Future<List<Product>> searchProducts(String query) async {
+  @override
+  Future<SearchSnapshot> searchProducts(
+    String query, {
+    SearchUpdateCallback? onUpdate,
+  }) async {
     await _ensureLoaded();
     final normalized = query.trim().toLowerCase();
-    if (normalized.isEmpty) {
-      return _cache ?? <Product>[];
-    }
-    return (_cache ?? <Product>[]).where((product) {
-      final inName = product.name.toLowerCase().contains(normalized);
-      final inDesc = product.description.toLowerCase().contains(normalized);
-      final inListings = product.listings.any(
-        (listing) => listing.store.name.toLowerCase().contains(normalized),
-      );
-      return inName || inDesc || inListings;
-    }).toList();
+    final results = normalized.isEmpty
+        ? (_cache ?? <Product>[])
+        : (_cache ?? <Product>[]).where((product) {
+            final inName = product.name.toLowerCase().contains(normalized);
+            final inDesc = product.description.toLowerCase().contains(normalized);
+            final inListings = product.listings.any(
+              (listing) => listing.store.name.toLowerCase().contains(normalized),
+            );
+            return inName || inDesc || inListings;
+          }).toList();
+    final snapshot = SearchSnapshot(
+      products: results,
+      fetchedAt: DateTime.now(),
+      fromCache: false,
+      sources: const {'mock'},
+    );
+    return snapshot;
   }
 
   @override
-  Future<Product?> getProductByBarcode(String barcode) async {
+  Future<SearchSnapshot> searchByBarcode(
+    String barcode, {
+    SearchUpdateCallback? onUpdate,
+  }) async {
     await _ensureLoaded();
     final trimmed = barcode.trim();
-    for (final product in _cache ?? <Product>[]) {
-      if (product.barcode == trimmed) {
-        return product;
-      }
-    }
-    return null;
+    final match = (_cache ?? <Product>[]).where((product) => product.barcode == trimmed);
+    final snapshot = SearchSnapshot(
+      products: match.toList(),
+      fetchedAt: DateTime.now(),
+      fromCache: false,
+      sources: const {'mock'},
+    );
+    return snapshot;
   }
 
   @override
-  Future<List<Product>> getFeaturedProducts() async {
+  Future<SearchSnapshot> getFeaturedProducts({SearchUpdateCallback? onUpdate}) async {
     await _ensureLoaded();
-    return (_cache ?? <Product>[]).take(5).toList();
+    final products = (_cache ?? <Product>[]).take(5).toList();
+    return SearchSnapshot(
+      products: products,
+      fetchedAt: DateTime.now(),
+      fromCache: false,
+      sources: const {'mock'},
+    );
   }
 }
